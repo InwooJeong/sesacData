@@ -175,6 +175,12 @@ grade.mean()
 # +
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib as mpl
+
+plt.rc('font',family='Malgun Gothic')
+plt.rc('axes',unicode_minus=False)
 
 data = pd.read_csv('data/data/store_market_data.csv',encoding='UTF-8-SIG')
 print(data.shape)
@@ -184,9 +190,8 @@ data.head()
 # Q1. Pandas 라이브러리를 호출하고 예제 데이터 (store_market_data.csv)를 불러와 상위 10개와 하위 10개 데이터를 확인하기
 
 data.head(10)
+
 data.tail(10)
-
-
 
 # Q2. 예제 데이터의 '물품대분류'의 카테고리 수와 '물품대분류'에 따른 '구매금액'의 합을 Pivot table을 이용해 구하기
 
@@ -199,35 +204,62 @@ pd.pivot_table(data=data,index='요일',values='구매금액',aggfunc='mean')
 
 pd.pivot_table(data=data,index='물품대분류',values='구매금액',aggfunc='sum')
 
+
 # Q3. 예제 데이터의 성별을 1과 0으로 라벨 처리 하기.(남성=1, 여성=0)
 
+# +
+def mof(x):
+    if x == "여":
+        return 0
+    elif x == "남":
+        return 1
+    
+data["성별(label)"] = data["성별"].apply(mof)
+data.tail(30)
+# -
 
+data['성별(label2)'] = data['성별'].replace('여',0).replace('남',1)
+data[['성별','성별(label2)']].head()
 
-
+data['성별(label)'].value_counts()
 
 # Q4. 예제 데이터에서 '요일'별로 '물품대분류'의 '구매금액'의 합을 계산하고, 판매량이 가장 높은 요일과 해당 요일에 가장 많이 판매된 품목을 확인하기
 
+pd.pivot_table(data=data,index=['요일','물품대분류'],values='구매금액',aggfunc='sum')
 
+df1 = pd.pivot_table(data=data,index=['요일','물품대분류'],values='구매금액',aggfunc='sum').reset_index()  # 인덱스 초기화
+
+df1.sort_values(by = '구매금액',ascending=False).head()
 
 # Q5. 예제 데이터에서 일자별로 '구매금액'의 총합을 계산하고, 가장 적게 팔린 날을 확인하기
 
-
+pd.pivot_table(data=data,index='공급일자',values='구매금액',aggfunc='sum').sort_values(by='구매금액').head()
 
 # Q6. 예제 데이터의 '성별'에 따른 '연령'을 Box Plot 하기
 
-
-
-
+plt.figure(figsize = ([10,5]))
+sns.boxplot(data = data, x = '성별', y = '연령')
+plt.show()
 
 # Q7. 예제 데이터의 '구매금액'에 대한 요약통계량을 확인하고, 25-75% 사이의 데이터를 추출하고 그 데이터로 Dist plot 생성하기
 
+data['구매금액'].describe()
 
-
-
-
-
+data_new = data[(data['구매금액']>=4116.0)&(data['구매금액']<=12635.0)]
+sns.distplot(data_new['구매금액'])
+plt.show()
 
 # Q8. 예제 데이터의 구매시각에서 시간 단위만 추출하여, 새로운 Column을 만들고, 시간에 따른 구매금액의 합을 Pivot table로 구하기.  
 #     더불어, '시간'에 따른 '구매금액'을 Bar plot 해보기
 
+data['구매시각'][0][0:2]
 
+
+# +
+def ftn1(data):
+    return data[0:2]
+
+data['시간대'] = data['구매시각'].apply(ftn1)
+table1 = pd.pivot_table(data=data,index='시간대',values='구매금액',aggfunc='sum').reset_index()
+
+sns.barplot(data=table1,x='시간대',y='구매금액')
